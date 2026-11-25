@@ -62,7 +62,7 @@ export function ReviewStudio() {
           <Link key={it.id} to={`/review/${it.id}`} className="group block">
             <div className="relative flex justify-center overflow-hidden bg-paper/60 p-4 transition-transform duration-500 group-hover:-translate-y-1">
               {it.slides[0] && (
-                <SlideCanvas slide={it.slides[0]} aspect={it.aspect} imageUrl={it.slides[0].asset_id ? urls[it.slides[0].asset_id] : undefined}
+                <SlideCanvas slide={it.slides[0]} aspect={it.aspect} imageUrl={it.slides[0].asset_id ? urls[it.slides[0].asset_id] : undefined} imageUrl2={it.slides[0].asset_id_2 ? urls[it.slides[0].asset_id_2] : undefined}
                   index={0} total={it.slides.length} wordmark={ws.name} scale={0.22} />
               )}
               {it.slides.length > 1 && (

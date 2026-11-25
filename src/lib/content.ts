@@ -1,13 +1,13 @@
 import { supabase } from './supabase'
 
 export type Aspect = '4:5' | '1:1' | '9:16'
-export type Layout = 'editorial' | 'split' | 'type' | 'monument' | 'masthead' | 'field' | 'issue' | 'framed' | 'quiet'
-export type FieldColor = 'burnt' | 'cobalt' | 'olive' | 'burgundy' | 'ink' | 'ivory'
+export type Layout = 'editorial' | 'split' | 'type' | 'monument' | 'masthead' | 'field' | 'issue' | 'framed' | 'quiet' | 'crop' | 'collage' | 'poster' | 'strips' | 'lookbook' | 'cinema' | 'billboard' | 'signature'
+export type FieldColor = 'burnt' | 'cobalt' | 'olive' | 'burgundy' | 'ink' | 'ivory' | 'acid' | 'red'
 export type ContentStatus =
   | 'idea' | 'draft' | 'ready_for_review' | 'revision_requested' | 'approved'
   | 'scheduled' | 'published' | 'rejected' | 'failed'
 
-export type Slide = { asset_id: string | null; layout: Layout; kicker: string; headline: string; body: string; color?: FieldColor }
+export type Slide = { asset_id: string | null; asset_id_2?: string | null; layout: Layout; kicker: string; headline: string; body: string; color?: FieldColor }
 
 export type ContentItem = {
   id: string
@@ -82,7 +82,7 @@ export async function composePost(params: { workspaceId: string; idea: string; f
 
 /** Signed URLs for the photos used in a set of content items. */
 export async function slideImageUrls(items: ContentItem[]): Promise<Record<string, string>> {
-  const ids = [...new Set(items.flatMap((i) => i.slides.map((s) => s.asset_id).filter(Boolean)))] as string[]
+  const ids = [...new Set(items.flatMap((i) => i.slides.flatMap((s) => [s.asset_id, s.asset_id_2]).filter(Boolean)))] as string[]
   if (ids.length === 0) return {}
   const { data, error } = await supabase.from('brand_assets').select('id, storage_path').in('id', ids)
   if (error || !data) return {}

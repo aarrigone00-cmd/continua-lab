@@ -9,17 +9,21 @@ const C = { ivory: '#F6F2EA', paper: '#EFE9DE', ink: '#1E1D1B', cobalt: '#1F3FBF
 const DISPLAY = "'Bodoni Moda', 'Didot', Georgia, serif"
 const SANS = "'Inter Tight', 'Helvetica Neue', Arial, sans-serif"
 const WIDE = "'Archivo', 'Helvetica Neue', Arial, sans-serif"
-const FIELD = { burnt: '#D9622B', cobalt: '#1F3FBF', olive: '#5F6B2A', burgundy: '#6B1E2A', ink: '#1E1D1B', ivory: '#F6F2EA' } as const
+const MONO = "'Space Mono', 'Courier New', monospace"
+const FIELD = { burnt: '#D9622B', cobalt: '#1F3FBF', olive: '#5F6B2A', burgundy: '#6B1E2A', ink: '#1E1D1B', ivory: '#F6F2EA', acid: '#D7FF3D', red: '#E1251B' } as const
+const LIGHT_FIELDS = new Set<string>([FIELD.ivory, FIELD.acid])
+/** Paper texture for the zine look: CSS-only so it survives PNG export. */
+const PAPER_TEXTURE = 'radial-gradient(rgba(30,29,27,0.07) 1px, transparent 1.4px)'
 const DEFAULT_FIELDS = ['burnt', 'cobalt', 'olive', 'burgundy'] as const
 
 function longestLine(text: string) {
   return Math.max(1, ...text.split('\n').map((l) => l.trim().length))
 }
 
-type Props = { slide: Slide; aspect: Aspect; imageUrl?: string; index: number; total: number; wordmark: string; scale?: number }
+type Props = { slide: Slide; aspect: Aspect; imageUrl?: string; imageUrl2?: string; index: number; total: number; wordmark: string; scale?: number }
 
 export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanvas(
-  { slide, aspect, imageUrl, index, total, wordmark, scale = 1 },
+  { slide, aspect, imageUrl, imageUrl2, index, total, wordmark, scale = 1 },
   ref,
 ) {
   const { w, h } = SIZES[aspect]
@@ -32,7 +36,7 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
   const counter = total > 1 ? `${String(index + 1).padStart(2, '0')} / ${String(total).padStart(2, '0')}` : null
   const headSize = Math.max(84, Math.min(132, 2600 / Math.max(14, slide.headline.length)))
   const img = (style: CSSProperties) =>
-    imageUrl ? <img src={imageUrl} crossOrigin="anonymous" alt="" style={{ objectFit: 'cover', display: 'block', ...style }} /> : (
+    imageUrl ? <img src={imageUrl} crossOrigin="anonymous" alt="" style={{ objectFit: 'cover', display: 'block', maxWidth: 'none', ...style }} /> : (
       <div style={{ background: C.paper, display: 'grid', placeItems: 'center', color: C.graphite, fontSize: 26, letterSpacing: 3, textTransform: 'uppercase', ...style }}>No photo</div>
     )
   const kicker = slide.kicker && (
@@ -59,8 +63,143 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
     </div>
   )
 
+  const pickBg = (fallback: keyof typeof FIELD) => FIELD[slide.color && slide.color !== 'ink' ? slide.color : fallback]
+  const mono = slide.color === 'ink' // "ink" on photo layouts = black-and-white treatment
+  const words = slide.headline.includes('\n') ? slide.headline.split('\n') : slide.headline.split(/\s+/)
+
   let body
-  if (slide.layout === 'monument') {
+  if (slide.layout === 'cinema') {
+    // Kargo-like: graded cinematic photo, tiny credits spread along one line.
+    const items = [slide.kicker || 'Lacasacontinua', slide.headline.replace(/\n/g, ' '), counter ?? 'Miami', wordmark]
+    body = (
+      <div style={{ position: 'absolute', inset: 0, background: '#0E0E0E' }}>
+        {img({ position: 'absolute', inset: 0, width: w, height: h, filter: mono ? 'grayscale(1) contrast(1.2) brightness(0.8)' : 'contrast(1.15) saturate(0.82) brightness(0.8)' })}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0) 65%, rgba(0,0,0,0.45) 100%)' }} />
+        <div style={{ position: 'absolute', left: 44, right: 44, top: '50%', transform: 'translateY(-50%)', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', color: '#F2F0EA', fontFamily: WIDE, fontStretch: '110%', fontSize: 19, letterSpacing: 2.5, textTransform: 'uppercase' }}>
+          {items.map((t, i) => <span key={i} style={i === 1 ? { fontWeight: 800, fontSize: 30, letterSpacing: 4 } : { opacity: 0.85 }}>{t}</span>)}
+        </div>
+        {slide.body && <div style={{ position: 'absolute', left: 44, bottom: tall ? 110 : 44, maxWidth: 520, fontFamily: SANS, fontSize: 20, lineHeight: 1.45, color: '#E8E5DE', opacity: 0.9 }}>{slide.body}</div>}
+      </div>
+    )
+  } else if (slide.layout === 'billboard') {
+    // WAIRK-like: close photo, one giant heavy word anchored to the bottom edge.
+    const word = slide.headline.replace(/\n/g, ' ').toUpperCase()
+    const size = Math.min(520, Math.max(120, Math.floor((w - 24) / (Math.max(3, word.length) * 0.8))))
+    body = (
+      <div style={{ position: 'absolute', inset: 0, background: C.ink }}>
+        {img({ position: 'absolute', inset: 0, width: w, height: h, filter: mono ? 'grayscale(1) contrast(1.25)' : 'contrast(1.1) saturate(1.05)' })}
+        <div style={{ position: 'absolute', left: 36, top: 34, color: C.ivory, fontFamily: WIDE, fontSize: 17, lineHeight: 1.45, letterSpacing: 1.5, textTransform: 'uppercase', fontWeight: 700 }}>
+          <div>{wordmark}</div>
+          {slide.kicker && <div style={{ fontWeight: 500 }}>{slide.kicker}</div>}
+          {counter && <div style={{ fontWeight: 500 }}>{counter}</div>}
+        </div>
+        {slide.body && <div style={{ position: 'absolute', right: 36, top: 34, maxWidth: 380, textAlign: 'right', color: C.ivory, fontFamily: WIDE, fontSize: 17, lineHeight: 1.45, letterSpacing: 1.5, textTransform: 'uppercase' }}>{slide.body}</div>}
+        <div style={{ position: 'absolute', left: 0, right: 0, bottom: tall ? 60 : -Math.round(size * 0.1), textAlign: 'center', whiteSpace: 'nowrap', fontFamily: WIDE, fontStretch: '100%', fontWeight: 900, fontSize: size, lineHeight: 0.8, letterSpacing: -size * 0.035, color: '#FFFFFF' }}>{word}</div>
+      </div>
+    )
+  } else if (slide.layout === 'signature') {
+    // Heat-like: near-black (or brand color), one small signature title, tiny line at the bottom.
+    const bg = slide.color && slide.color !== 'ink' ? FIELD[slide.color] : '#1C1C1B'
+    const fg = LIGHT_FIELDS.has(bg) ? C.ink : '#F2EFE6'
+    body = (
+      <div style={{ position: 'absolute', inset: 0, background: bg, color: fg }}>
+        <div style={{ position: 'absolute', left: 44, right: 44, top: 38, display: 'flex', justifyContent: 'space-between', fontFamily: SANS, fontSize: 17, letterSpacing: 1.5, textTransform: 'uppercase', opacity: 0.85 }}>
+          <span>{wordmark}</span><span>{slide.kicker}</span><span>{counter ?? '© 2026'}</span>
+        </div>
+        <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', textAlign: 'center', padding: 140 }}>
+          <div style={{ fontFamily: DISPLAY, fontStyle: 'italic', fontWeight: 400, fontSize: 76, lineHeight: 1, letterSpacing: -1, whiteSpace: 'pre-line' }}>{slide.headline}</div>
+        </div>
+        {slide.body && <div style={{ position: 'absolute', left: 0, right: 0, bottom: tall ? 110 : 44, textAlign: 'center', fontFamily: SANS, fontSize: 17, letterSpacing: 1.5, textTransform: 'uppercase', opacity: 0.8 }}>{slide.body}</div>}
+      </div>
+    )
+  } else if (slide.layout === 'crop') {
+    // Fashion campaign: extreme zoom into the photo, vertical title on the edge, tiny corner text.
+    const origins = ['32% 38%', '68% 30%', '45% 68%', '72% 62%']
+    body = (
+      <div style={{ position: 'absolute', inset: 0, background: C.ink }}>
+        <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
+          {img({ position: 'absolute', inset: 0, width: w, height: h, transform: 'scale(2.1)', transformOrigin: origins[index % origins.length], filter: mono ? 'grayscale(1) contrast(1.35)' : 'contrast(1.12) saturate(1.08)' })}
+        </div>
+        <div style={{ position: 'absolute', left: 44, top: 40, fontFamily: WIDE, fontStretch: '125%', fontWeight: 700, fontSize: 20, letterSpacing: 6, color: C.ivory, textTransform: 'uppercase' }}>{wordmark}</div>
+        <div style={{ position: 'absolute', right: 34, top: 0, bottom: 0, display: 'flex', alignItems: 'center' }}>
+          <div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', fontFamily: WIDE, fontStretch: '125%', fontWeight: 800, fontSize: 64, letterSpacing: 14, color: C.ivory, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{slide.headline.replace(/\n/g, ' ')}</div>
+        </div>
+        <div style={{ position: 'absolute', left: 44, bottom: tall ? 110 : 40, fontFamily: MONO, fontSize: 20, color: C.ivory, letterSpacing: 1, maxWidth: 620, lineHeight: 1.4 }}>
+          {slide.kicker}{slide.body ? <><br />{slide.body}</> : null}
+        </div>
+        {counter && <div style={{ position: 'absolute', right: 120, bottom: tall ? 110 : 40, fontFamily: MONO, fontSize: 20, color: C.ivory }}>{counter}</div>}
+      </div>
+    )
+  } else if (slide.layout === 'collage') {
+    // Underground zine: overlapping xeroxed photos, tape, typewriter label, rubber stamp.
+    const second = imageUrl2 ?? imageUrl
+    body = (
+      <div style={{ position: 'absolute', inset: 0, background: '#E6E0D4', backgroundImage: PAPER_TEXTURE, backgroundSize: '7px 7px' }}>
+        {img({ position: 'absolute', left: 64, top: tall ? 220 : 110, width: 640, height: 800, transform: 'rotate(-4deg)', filter: 'grayscale(1) contrast(1.55) brightness(1.05)', boxShadow: '0 18px 30px -18px rgba(0,0,0,.5)' })}
+        <div style={{ position: 'absolute', right: 70, top: tall ? 820 : 560, transform: 'rotate(5deg)', background: C.ivory, padding: 14, boxShadow: '0 18px 30px -16px rgba(0,0,0,.45)' }}>
+          {second
+            ? <img src={second} crossOrigin="anonymous" alt="" style={{ display: 'block', maxWidth: 'none', width: 430, height: 520, objectFit: 'cover', objectPosition: imageUrl2 ? 'center' : '80% 70%', filter: 'contrast(1.15) saturate(1.1)' }} />
+            : <div style={{ width: 430, height: 520, background: C.paper }} />}
+        </div>
+        <div style={{ position: 'absolute', left: 300, top: tall ? 196 : 86, width: 220, height: 52, background: 'rgba(240,228,200,.75)', transform: 'rotate(-9deg)' }} />
+        <div style={{ position: 'absolute', right: 180, top: tall ? 800 : 540, width: 200, height: 48, background: 'rgba(240,228,200,.75)', transform: 'rotate(12deg)' }} />
+        <div style={{ position: 'absolute', left: 54, bottom: tall ? 200 : 96, transform: 'rotate(-2deg)', background: C.ivory, padding: '16px 22px', maxWidth: 600 }}>
+          <div style={{ fontFamily: MONO, fontWeight: 700, fontSize: 52, lineHeight: 1.05, textTransform: 'uppercase', color: C.ink, whiteSpace: 'pre-line' }}>{slide.headline}</div>
+          {slide.body && <div style={{ fontFamily: MONO, fontSize: 22, marginTop: 10, color: C.graphite }}>{slide.body}</div>}
+        </div>
+        {slide.kicker && (
+          <div style={{ position: 'absolute', right: 70, top: tall ? 240 : 120, transform: 'rotate(9deg)', border: `5px solid ${FIELD.red}`, color: FIELD.red, padding: '10px 18px', fontFamily: MONO, fontWeight: 700, fontSize: 30, letterSpacing: 3, textTransform: 'uppercase', opacity: 0.88 }}>{slide.kicker}</div>
+        )}
+        <div style={{ position: 'absolute', right: 56, bottom: tall ? 110 : 40, fontFamily: MONO, fontSize: 18, color: C.ink }}>{wordmark.toUpperCase()}{counter ? `  ·  ${counter}` : ''}</div>
+      </div>
+    )
+  } else if (slide.layout === 'poster') {
+    // Studio poster: giant type bleeding off the frame over a cut-in photo.
+    const bg = pickBg('acid')
+    const fg = LIGHT_FIELDS.has(bg) ? C.ink : C.ivory
+    const size = Math.min(360, Math.max(200, Math.floor(1500 / Math.max(3, ...words.map((x) => x.length)))))
+    body = (
+      <div style={{ position: 'absolute', inset: 0, background: bg, color: fg }}>
+        {imageUrl && img({ position: 'absolute', right: 0, bottom: 0, width: 640, height: tall ? 1000 : 780, filter: mono ? 'grayscale(1) contrast(1.3)' : 'contrast(1.1)' })}
+        <div style={{ position: 'absolute', left: -24, top: tall ? 90 : -18, right: -60, fontFamily: WIDE, fontStretch: '62%', fontWeight: 900, fontSize: size, lineHeight: 0.8, letterSpacing: -size * 0.03, textTransform: 'uppercase', color: fg }}>
+          {words.map((wd, i) => <div key={i}>{wd}</div>)}
+        </div>
+        <div style={{ position: 'absolute', left: 44, bottom: tall ? 110 : 40, fontFamily: MONO, fontSize: 20, lineHeight: 1.5, maxWidth: 360 }}>
+          {slide.kicker && <div style={{ textTransform: 'uppercase' }}>{slide.kicker}</div>}
+          <div>{wordmark}{counter ? ` · ${counter}` : ''}</div>
+        </div>
+      </div>
+    )
+  } else if (slide.layout === 'strips') {
+    // Fashion/art: the photo sliced into shifting vertical strips.
+    const n = 6
+    const sw = w / n
+    body = (
+      <div style={{ position: 'absolute', inset: 0, background: C.ink }}>
+        {Array.from({ length: n }, (_, i) => (
+          <div key={i} style={{ position: 'absolute', left: i * sw, top: 0, width: sw - 6, height: h, overflow: 'hidden', transform: `translateY(${(i % 2 ? 1 : -1) * (30 + (i * 17) % 50)}px)` }}>
+            {img({ position: 'absolute', left: -i * sw, top: 0, width: w, height: h, filter: mono ? 'grayscale(1) contrast(1.3)' : 'none' })}
+          </div>
+        ))}
+        <div style={{ position: 'absolute', left: 0, right: 0, bottom: tall ? 120 : 56, textAlign: 'center', fontFamily: WIDE, fontStretch: '125%', fontWeight: 700, fontSize: 46, letterSpacing: 16, color: C.ivory, textTransform: 'uppercase', mixBlendMode: 'difference' }}>{slide.headline.replace(/\n/g, ' ')}</div>
+        {slide.kicker && <div style={{ position: 'absolute', left: 44, top: 40, fontFamily: MONO, fontSize: 20, color: C.ivory }}>{slide.kicker}</div>}
+        {counter && <div style={{ position: 'absolute', right: 44, top: 40, fontFamily: MONO, fontSize: 20, color: C.ivory }}>{counter}</div>}
+      </div>
+    )
+  } else if (slide.layout === 'lookbook') {
+    // Fashion lookbook: small photo floating in vast space, tiny index text.
+    const bg = slide.color === 'ink' ? C.ink : C.ivory
+    const fg = bg === C.ink ? C.ivory : C.ink
+    body = (
+      <div style={{ position: 'absolute', inset: 0, background: bg, color: fg }}>
+        {img({ position: 'absolute', right: 96, top: tall ? 260 : 110, width: 470, height: 600 })}
+        <div style={{ position: 'absolute', left: 64, top: tall ? 120 : 60, fontFamily: MONO, fontSize: 20, letterSpacing: 2, textTransform: 'uppercase' }}>{slide.kicker || `Look ${String(index + 1).padStart(2, '0')}`}</div>
+        <div style={{ position: 'absolute', left: 64, bottom: tall ? 260 : 150, maxWidth: 640, fontFamily: DISPLAY, fontStyle: 'italic', fontSize: 64, lineHeight: 1.02, whiteSpace: 'pre-line' }}>{slide.headline}</div>
+        {slide.body && <div style={{ position: 'absolute', left: 64, bottom: tall ? 180 : 80, maxWidth: 560, fontFamily: MONO, fontSize: 19, lineHeight: 1.5 }}>{slide.body}</div>}
+        <div style={{ position: 'absolute', right: 96, bottom: tall ? 120 : 60, fontFamily: MONO, fontSize: 18, letterSpacing: 2 }}>{wordmark.toUpperCase()}{counter ? ` — ${counter}` : ''}</div>
+      </div>
+    )
+  } else if (slide.layout === 'monument') {
     // Full-bleed photo, one wide spaced-out word.
     const size = fitTitle(0.98, 64, 170)
     body = (
@@ -87,7 +226,7 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
   } else if (slide.layout === 'field') {
     // Flat brand color with one oversized word or mark.
     const bg = FIELD[slide.color ?? DEFAULT_FIELDS[index % DEFAULT_FIELDS.length]]
-    const fg = bg === C.ivory ? C.ink : C.ivory
+    const fg = LIGHT_FIELDS.has(bg) ? C.ink : C.ivory
     const size = fitTitle(0.72, 90, 420)
     body = (
       <div style={{ position: 'absolute', inset: 0, background: bg, color: fg }}>

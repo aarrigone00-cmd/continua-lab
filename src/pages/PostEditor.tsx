@@ -13,12 +13,20 @@ import type { BrandAsset } from '../lib/types'
 import { useWorkspace } from '../lib/workspace-context'
 
 const LAYOUTS: { value: Layout; label: string }[] = [
-  { value: 'monument', label: 'Monument' },
+  { value: 'cinema', label: 'Cinema' },
+  { value: 'billboard', label: 'Billboard' },
+  { value: 'crop', label: 'Crop' },
+  { value: 'signature', label: 'Signature' },
+  { value: 'poster', label: 'Poster' },
   { value: 'masthead', label: 'Masthead' },
+  { value: 'monument', label: 'Monument' },
   { value: 'field', label: 'Color field' },
+  { value: 'quiet', label: 'Quiet' },
+  { value: 'lookbook', label: 'Lookbook' },
   { value: 'issue', label: 'Issue' },
   { value: 'framed', label: 'Framed' },
-  { value: 'quiet', label: 'Quiet' },
+  { value: 'collage', label: 'Collage' },
+  { value: 'strips', label: 'Strips' },
   { value: 'editorial', label: 'Editorial' },
   { value: 'split', label: 'Split' },
   { value: 'type', label: 'Typographic' },
@@ -31,6 +39,8 @@ const FIELD_COLORS: { value: FieldColor; hex: string; label: string }[] = [
   { value: 'burgundy', hex: '#6B1E2A', label: 'Burgundy' },
   { value: 'ink', hex: '#1E1D1B', label: 'Charcoal' },
   { value: 'ivory', hex: '#F6F2EA', label: 'Ivory' },
+  { value: 'acid', hex: '#D7FF3D', label: 'Acid lime' },
+  { value: 'red', hex: '#E1251B', label: 'Signal red' },
 ]
 
 export function PostEditor() {
@@ -45,6 +55,7 @@ export function PostEditor() {
   const [urls, setUrls] = useState<Record<string, string>>({}) // by storage_path
   const [sel, setSel] = useState(0)
   const [picking, setPicking] = useState(false)
+  const [picking2, setPicking2] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState('')
@@ -140,14 +151,14 @@ export function PostEditor() {
         {/* Preview */}
         <div className="grid content-start justify-items-start gap-4">
           <div className="bg-paper/60 p-5 shadow-sm">
-            <SlideCanvas slide={slide} aspect={draft.aspect} imageUrl={urlFor(slide.asset_id)} index={sel} total={draft.slides.length} wordmark={ws.name} scale={previewScale} />
+            <SlideCanvas slide={slide} aspect={draft.aspect} imageUrl={urlFor(slide.asset_id)} imageUrl2={urlFor(slide.asset_id_2 ?? null)} index={sel} total={draft.slides.length} wordmark={ws.name} scale={previewScale} />
           </div>
           {draft.slides.length > 1 && (
             <div className="flex max-w-full flex-wrap gap-2" role="tablist" aria-label="Slides">
               {draft.slides.map((s, i) => (
                 <button key={i} role="tab" aria-selected={i === sel} onClick={() => { setSel(i); setPicking(false) }}
                   className={`outline-offset-2 ${i === sel ? 'outline outline-2 outline-[var(--accent)]' : 'opacity-70 hover:opacity-100'}`}>
-                  <SlideCanvas slide={s} aspect={draft.aspect} imageUrl={urlFor(s.asset_id)} index={i} total={draft.slides.length} wordmark={ws.name} scale={0.07} />
+                  <SlideCanvas slide={s} aspect={draft.aspect} imageUrl={urlFor(s.asset_id)} imageUrl2={urlFor(s.asset_id_2 ?? null)} index={i} total={draft.slides.length} wordmark={ws.name} scale={0.07} />
                 </button>
               ))}
             </div>
@@ -173,7 +184,7 @@ export function PostEditor() {
                 </select>
               )}
             </div>
-            {(slide.layout === 'field' || slide.layout === 'framed') && (
+            {['field', 'framed', 'poster', 'crop', 'strips', 'lookbook', 'cinema', 'billboard', 'signature'].includes(slide.layout) && (
               <div className="flex flex-wrap items-center gap-2" role="radiogroup" aria-label="Field color">
                 {FIELD_COLORS.map((c) => (
                   <button key={c.value} role="radio" aria-checked={slide.color === c.value} title={c.label} aria-label={c.label} disabled={!canEdit}
@@ -183,8 +194,8 @@ export function PostEditor() {
                 ))}
               </div>
             )}
-            {['monument', 'masthead', 'field'].includes(slide.layout) && (
-              <p className="text-xs text-[var(--muted)]">These layouts work best with one to three words. Press Enter in the headline for a line break.</p>
+            {['monument', 'masthead', 'field', 'poster', 'crop', 'strips', 'collage', 'cinema', 'billboard', 'signature'].includes(slide.layout) && (
+              <p className="text-xs text-[var(--muted)]">Short titles work best: one to three words. Press Enter in the headline for a line break. On photo layouts, Charcoal switches the photo to black and white.</p>
             )}
             <label className="grid gap-1" htmlFor="s-kicker"><span className={labelClass}>Kicker</span>
               <input id="s-kicker" className={fieldClass} value={slide.kicker} disabled={!canEdit} onChange={(e) => setSlide({ kicker: e.target.value })} /></label>
@@ -197,6 +208,22 @@ export function PostEditor() {
               {canEdit && <button className={textBtn} onClick={() => setPicking((p) => !p)}>{picking ? 'Close photos' : 'Change photo'}</button>}
               {canEdit && slide.asset_id && <button className={textBtn} onClick={() => setSlide({ asset_id: null })}>Remove photo</button>}
             </div>
+            {slide.layout === 'collage' && canEdit && (
+              <div className="flex flex-wrap items-center gap-4">
+                <span className={labelClass}>Second photo: {slide.asset_id_2 && byId[slide.asset_id_2] ? byId[slide.asset_id_2].title : 'detail of the first'}</span>
+                <button className={textBtn} onClick={() => setPicking2((p) => !p)}>{picking2 ? 'Close photos' : 'Change second photo'}</button>
+              </div>
+            )}
+            {picking2 && (
+              <div className="grid max-h-[360px] grid-cols-4 gap-2 overflow-y-auto pr-1 sm:grid-cols-6">
+                {photos.map((p) => (
+                  <button key={p.id} title={p.title} aria-label={`Use ${p.title} as second photo`} onClick={() => { setSlide({ asset_id_2: p.id }); setPicking2(false) }}
+                    className={`aspect-square overflow-hidden [&_img]:h-full [&_img]:object-cover ${slide.asset_id_2 === p.id ? 'outline outline-2 outline-[var(--accent)]' : 'opacity-80 hover:opacity-100'}`}>
+                    <AssetPreview asset={p} url={urls[p.storage_path]} />
+                  </button>
+                ))}
+              </div>
+            )}
             {picking && (
               <div className="grid max-h-[360px] grid-cols-4 gap-2 overflow-y-auto pr-1 sm:grid-cols-6">
                 {photos.map((p) => (
@@ -255,7 +282,7 @@ export function PostEditor() {
       <div aria-hidden="true" style={{ position: 'fixed', left: -20000, top: 0, pointerEvents: 'none' }}>
         {draft.slides.map((s, i) => (
           <SlideCanvas key={i} ref={(el) => { exportRefs.current[i] = el }} slide={s} aspect={draft.aspect}
-            imageUrl={urlFor(s.asset_id)} index={i} total={draft.slides.length} wordmark={ws.name} />
+            imageUrl={urlFor(s.asset_id)} imageUrl2={urlFor(s.asset_id_2 ?? null)} index={i} total={draft.slides.length} wordmark={ws.name} />
         ))}
       </div>
     </div>
