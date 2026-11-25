@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { useAuth } from '../lib/auth-context'
 
 const links = [
   { to: '/', label: 'Studio' },
@@ -10,6 +11,7 @@ const links = [
 ]
 
 export function Nav() {
+  const { signOut } = useAuth()
   return (
     <nav className="flex flex-wrap items-center gap-x-7 gap-y-2.5 border-b border-[var(--rule-strong)] pb-3.5 text-xs uppercase tracking-[0.12em]">
       <NavLink to="/" className="mr-auto font-display text-xl font-semibold normal-case tracking-[0.02em]">
@@ -27,6 +29,12 @@ export function Nav() {
           {l.label}
         </NavLink>
       ))}
+      <button
+        onClick={signOut}
+        className="uppercase tracking-[0.12em] text-[var(--muted)] transition-colors hover:text-cherry"
+      >
+        Sign out
+      </button>
     </nav>
   )
 }
