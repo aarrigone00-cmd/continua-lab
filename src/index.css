@@ -87,3 +87,26 @@ h1, h2, h3 { text-wrap: balance; }
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Claude's replies: an editorial column */
+.md { font-size: 16px; line-height: 1.65; }
+.md > * + * { margin-top: 0.9em; }
+.md h1, .md h2, .md h3 { font-family: var(--font-display); font-weight: 400; line-height: 1.1; margin-top: 1.4em; }
+.md h1 { font-size: 2.1em; }
+.md h2 { font-size: 1.7em; }
+.md h3 { font-size: 1.3em; font-style: italic; }
+.md h4 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin-top: 1.6em; }
+.md strong { font-weight: 600; }
+.md em { font-family: var(--font-display); font-style: italic; }
+.md ul, .md ol { padding-left: 1.3em; }
+.md ul { list-style: square; }
+.md ol { list-style: decimal; }
+.md li + li { margin-top: 0.3em; }
+.md li::marker { color: var(--accent); }
+.md blockquote { border-left: 2px solid var(--color-cherry); padding-left: 1em; font-family: var(--font-display); font-style: italic; font-size: 1.15em; }
+.md hr { border: 0; border-top: 1px solid var(--rule); margin: 2em 0; }
+.md code { font-size: 0.9em; background: var(--rule); padding: 0.1em 0.35em; }
+.md a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.md table { display: block; overflow-x: auto; border-collapse: collapse; font-size: 14px; max-width: 100%; }
+.md th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 500; }
+.md th, .md td { border-bottom: 1px solid var(--rule); padding: 0.55em 1em 0.55em 0; vertical-align: top; }

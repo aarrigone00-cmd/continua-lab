@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { BriefForm } from '../components/brand/BriefForm'
 import { AssetDrawer } from '../components/brand/AssetDrawer'
 import { Gallery } from '../components/brand/Gallery'
 import { ProductEditor } from '../components/brand/ProductEditor'
@@ -10,12 +12,14 @@ import { listProducts } from '../lib/products'
 import type { Approval, BrandAsset, Product } from '../lib/types'
 import { useWorkspace } from '../lib/workspace-context'
 
-type Tab = 'archive' | 'products'
+type Tab = 'archive' | 'products' | 'brief'
 
 export function BrandDNA() {
   const ws = useWorkspace()
   const canEdit = ws.role !== 'viewer'
-  const [tab, setTab] = useState<Tab>('archive')
+  const [params, setParams] = useSearchParams()
+  const tab: Tab = (['archive', 'products', 'brief'] as const).find((t) => t === params.get('tab')) ?? 'archive'
+  const setTab = (t: Tab) => setParams(t === 'archive' ? {} : { tab: t }, { replace: true })
   const [assets, setAssets] = useState<BrandAsset[] | null>(null)
   const [products, setProducts] = useState<Product[] | null>(null)
   const [urls, setUrls] = useState<Record<string, string>>({})
@@ -88,10 +92,10 @@ export function BrandDNA() {
 
       <div className="flex flex-wrap items-center justify-between gap-4 border-t border-[var(--rule-strong)] pt-4">
         <div role="tablist" aria-label="Brand DNA sections" className="flex gap-8">
-          {(['archive', 'products'] as const).map((t) => (
+          {(['archive', 'products', 'brief'] as const).map((t) => (
             <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)}
               className={`font-display text-2xl transition-colors ${tab === t ? 'text-[var(--fg)] italic' : 'text-[var(--muted)] hover:text-[var(--fg)]'}`}>
-              {t === 'archive' ? 'The Archive' : 'Products'}
+              {t === 'archive' ? 'The Archive' : t === 'products' ? 'Products' : 'Brief'}
             </button>
           ))}
         </div>
@@ -103,6 +107,8 @@ export function BrandDNA() {
 
       {!assets || !products ? (
         !error && <p className="py-16 text-[11px] uppercase tracking-[0.16em] text-[var(--muted)]">Opening the archive…</p>
+      ) : tab === 'brief' ? (
+        <BriefForm workspaceId={ws.id} canEdit={canEdit} />
       ) : tab === 'archive' ? (
         <div className="mt-6">
           {uploading && <Uploader workspaceId={ws.id} onUploaded={onUploaded} onClose={() => setUploading(false)} />}
