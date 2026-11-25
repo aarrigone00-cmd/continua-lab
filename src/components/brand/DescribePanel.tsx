@@ -3,7 +3,7 @@ import { describeAssets, listAssets } from '../../lib/assets'
 import type { BrandAsset } from '../../lib/types'
 import { ghostBtn, solidBtn, textBtn } from '../ui'
 
-const EST_PER_PHOTO = 0.01 // USD, rough estimate shown before starting
+const EST_PER_PHOTO = 0.025 // USD per photo, measured on real runs (~4,700 input tokens per photo)
 
 /** Lets Claude look at undescribed photos and write titles, descriptions and tags. */
 export function DescribePanel({ workspaceId, assets, onUpdated }: {
@@ -59,7 +59,7 @@ export function DescribePanel({ workspaceId, assets, onUpdated }: {
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
           <p className="min-w-0 flex-1 text-sm">
             Describe {todo.length} photo{todo.length === 1 ? '' : 's'} for about <b>${(todo.length * EST_PER_PHOTO).toFixed(2)}</b>
-            <span className="text-[var(--muted)]"> (estimate, about 1¢ each). Titles, descriptions and tags will be replaced; you can edit any of them afterwards.</span>
+            <span className="text-[var(--muted)]"> (estimate, about 2–3¢ each). Titles, descriptions and tags will be replaced; you can edit any of them afterwards.</span>
           </p>
           <button className={solidBtn} onClick={start}>Start</button>
           <button className={textBtn} onClick={() => setPhase('idle')}>Cancel</button>
