@@ -7,15 +7,30 @@ import { fieldClass, ghostBtn, labelClass, solidBtn, textBtn } from '../componen
 import { listAssets, signedUrls } from '../lib/assets'
 import {
   deleteContent, getContent, SIZES, statusColor, STATUS_LABEL, updateContent,
-  type Aspect, type ContentItem, type ContentStatus, type Layout, type Slide,
+  type Aspect, type ContentItem, type ContentStatus, type FieldColor, type Layout, type Slide,
 } from '../lib/content'
 import type { BrandAsset } from '../lib/types'
 import { useWorkspace } from '../lib/workspace-context'
 
 const LAYOUTS: { value: Layout; label: string }[] = [
+  { value: 'monument', label: 'Monument' },
+  { value: 'masthead', label: 'Masthead' },
+  { value: 'field', label: 'Color field' },
+  { value: 'issue', label: 'Issue' },
+  { value: 'framed', label: 'Framed' },
+  { value: 'quiet', label: 'Quiet' },
   { value: 'editorial', label: 'Editorial' },
   { value: 'split', label: 'Split' },
   { value: 'type', label: 'Typographic' },
+]
+
+const FIELD_COLORS: { value: FieldColor; hex: string; label: string }[] = [
+  { value: 'burnt', hex: '#D9622B', label: 'Burnt orange' },
+  { value: 'cobalt', hex: '#1F3FBF', label: 'Cobalt' },
+  { value: 'olive', hex: '#5F6B2A', label: 'Olive' },
+  { value: 'burgundy', hex: '#6B1E2A', label: 'Burgundy' },
+  { value: 'ink', hex: '#1E1D1B', label: 'Charcoal' },
+  { value: 'ivory', hex: '#F6F2EA', label: 'Ivory' },
 ]
 
 export function PostEditor() {
@@ -158,6 +173,19 @@ export function PostEditor() {
                 </select>
               )}
             </div>
+            {(slide.layout === 'field' || slide.layout === 'framed') && (
+              <div className="flex flex-wrap items-center gap-2" role="radiogroup" aria-label="Field color">
+                {FIELD_COLORS.map((c) => (
+                  <button key={c.value} role="radio" aria-checked={slide.color === c.value} title={c.label} aria-label={c.label} disabled={!canEdit}
+                    onClick={() => setSlide({ color: c.value })}
+                    className={`h-8 w-8 border ${slide.color === c.value ? 'outline outline-2 outline-offset-2 outline-[var(--accent)]' : 'border-[var(--rule-strong)]'}`}
+                    style={{ background: c.hex }} />
+                ))}
+              </div>
+            )}
+            {['monument', 'masthead', 'field'].includes(slide.layout) && (
+              <p className="text-xs text-[var(--muted)]">These layouts work best with one to three words. Press Enter in the headline for a line break.</p>
+            )}
             <label className="grid gap-1" htmlFor="s-kicker"><span className={labelClass}>Kicker</span>
               <input id="s-kicker" className={fieldClass} value={slide.kicker} disabled={!canEdit} onChange={(e) => setSlide({ kicker: e.target.value })} /></label>
             <label className="grid gap-1" htmlFor="s-headline"><span className={labelClass}>Headline</span>

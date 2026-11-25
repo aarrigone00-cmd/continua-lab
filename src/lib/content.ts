@@ -1,12 +1,13 @@
 import { supabase } from './supabase'
 
 export type Aspect = '4:5' | '1:1' | '9:16'
-export type Layout = 'editorial' | 'split' | 'type'
+export type Layout = 'editorial' | 'split' | 'type' | 'monument' | 'masthead' | 'field' | 'issue' | 'framed' | 'quiet'
+export type FieldColor = 'burnt' | 'cobalt' | 'olive' | 'burgundy' | 'ink' | 'ivory'
 export type ContentStatus =
   | 'idea' | 'draft' | 'ready_for_review' | 'revision_requested' | 'approved'
   | 'scheduled' | 'published' | 'rejected' | 'failed'
 
-export type Slide = { asset_id: string | null; layout: Layout; kicker: string; headline: string; body: string }
+export type Slide = { asset_id: string | null; layout: Layout; kicker: string; headline: string; body: string; color?: FieldColor }
 
 export type ContentItem = {
   id: string

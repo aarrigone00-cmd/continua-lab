@@ -8,6 +8,13 @@ import { SIZES, type Aspect, type Slide } from '../../lib/content'
 const C = { ivory: '#F6F2EA', paper: '#EFE9DE', ink: '#1E1D1B', cobalt: '#1F3FBF', cherry: '#C8102E', graphite: '#5E5850' }
 const DISPLAY = "'Bodoni Moda', 'Didot', Georgia, serif"
 const SANS = "'Inter Tight', 'Helvetica Neue', Arial, sans-serif"
+const WIDE = "'Archivo', 'Helvetica Neue', Arial, sans-serif"
+const FIELD = { burnt: '#D9622B', cobalt: '#1F3FBF', olive: '#5F6B2A', burgundy: '#6B1E2A', ink: '#1E1D1B', ivory: '#F6F2EA' } as const
+const DEFAULT_FIELDS = ['burnt', 'cobalt', 'olive', 'burgundy'] as const
+
+function longestLine(text: string) {
+  return Math.max(1, ...text.split('\n').map((l) => l.trim().length))
+}
 
 type Props = { slide: Slide; aspect: Aspect; imageUrl?: string; index: number; total: number; wordmark: string; scale?: number }
 
@@ -35,8 +42,106 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
     <div style={{ fontFamily: DISPLAY, fontSize: 26, letterSpacing: 6, color }}>{wordmark.toUpperCase()}</div>
   )
 
+  // Size a one-line title so it spans the canvas: shorter words get bigger.
+  const fitTitle = (perChar: number, min: number, max: number) =>
+    Math.max(min, Math.min(max, Math.floor((w - 140) / Math.max(1, perChar * longestLine(slide.headline)))))
+  const vignette = 'radial-gradient(ellipse at center, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.08) 55%, rgba(0,0,0,0.22) 100%)'
+  const fullPhoto = (
+    <>
+      {img({ position: 'absolute', inset: 0, width: w, height: h })}
+      {imageUrl && <div style={{ position: 'absolute', inset: 0, background: vignette }} />}
+    </>
+  )
+  const smallLabel = (color: string) => (
+    <div style={{ position: 'absolute', left: 56, right: 56, bottom: tall ? 110 : 52, display: 'flex', justifyContent: 'space-between', fontSize: 22, letterSpacing: 4, textTransform: 'uppercase', color }}>
+      <span>{slide.kicker || wordmark}</span>
+      <span>{counter ?? wordmark}</span>
+    </div>
+  )
+
   let body
-  if (slide.layout === 'split') {
+  if (slide.layout === 'monument') {
+    // Full-bleed photo, one wide spaced-out word.
+    const size = fitTitle(0.98, 64, 170)
+    body = (
+      <>
+        {fullPhoto}
+        <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', padding: 70, textAlign: 'center' }}>
+          <div style={{ fontFamily: WIDE, fontStretch: '125%', fontWeight: 700, fontSize: size, letterSpacing: size * 0.12, lineHeight: 1, textTransform: 'uppercase', color: C.ivory, whiteSpace: 'pre-line' }}>{slide.headline}</div>
+        </div>
+        {smallLabel(C.ivory)}
+      </>
+    )
+  } else if (slide.layout === 'masthead') {
+    // Full-bleed photo, heavy serif title like a magazine cover.
+    const size = fitTitle(0.78, 72, 190)
+    body = (
+      <>
+        {fullPhoto}
+        <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', padding: 60, textAlign: 'center' }}>
+          <div style={{ fontFamily: DISPLAY, fontWeight: 800, fontSize: size, letterSpacing: -size * 0.02, lineHeight: 0.92, textTransform: 'uppercase', color: C.ivory, whiteSpace: 'pre-line' }}>{slide.headline}</div>
+        </div>
+        {smallLabel(C.ivory)}
+      </>
+    )
+  } else if (slide.layout === 'field') {
+    // Flat brand color with one oversized word or mark.
+    const bg = FIELD[slide.color ?? DEFAULT_FIELDS[index % DEFAULT_FIELDS.length]]
+    const fg = bg === C.ivory ? C.ink : C.ivory
+    const size = fitTitle(0.72, 90, 420)
+    body = (
+      <div style={{ position: 'absolute', inset: 0, background: bg, color: fg }}>
+        <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', padding: 70, textAlign: 'center' }}>
+          <div style={{ fontFamily: DISPLAY, fontWeight: 800, fontStyle: 'italic', fontSize: size, lineHeight: 0.9, letterSpacing: -size * 0.03, whiteSpace: 'pre-line' }}>{slide.headline}</div>
+        </div>
+        {slide.body && (
+          <div style={{ position: 'absolute', left: 72, right: 72, top: tall ? 140 : 64, fontSize: 28, lineHeight: 1.4, maxWidth: 720 }}>{slide.body}</div>
+        )}
+        {smallLabel(fg)}
+      </div>
+    )
+  } else if (slide.layout === 'issue') {
+    // Full-bleed photo, small centered literary text block (magazine-issue feel).
+    body = (
+      <>
+        {fullPhoto}
+        <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', padding: 120, textAlign: 'center', color: C.ivory }}>
+          <div style={{ display: 'grid', gap: 26, maxWidth: 640 }}>
+            <div style={{ fontFamily: DISPLAY, fontSize: 64, lineHeight: 1.02, whiteSpace: 'pre-line' }}>{slide.headline}</div>
+            {slide.kicker && <div style={{ fontFamily: DISPLAY, fontSize: 32, letterSpacing: 1 }}>{slide.kicker}</div>}
+            {slide.body && <div style={{ fontFamily: DISPLAY, fontStyle: 'italic', fontWeight: 400, fontSize: 30, lineHeight: 1.3, whiteSpace: 'pre-line' }}>{slide.body}</div>}
+          </div>
+        </div>
+      </>
+    )
+  } else if (slide.layout === 'framed') {
+    // Solid color field with the photo as a small framed card.
+    const bg = FIELD[slide.color ?? DEFAULT_FIELDS[(index + 1) % DEFAULT_FIELDS.length]]
+    const cardW = 600
+    const photoH = tall ? 760 : 560
+    body = (
+      <div style={{ position: 'absolute', inset: 0, background: bg, display: 'grid', placeItems: 'center' }}>
+        <div style={{ width: cardW, background: C.ivory, color: C.ink, padding: '34px 34px 30px', display: 'grid', gap: 22, textAlign: 'center', boxShadow: '0 30px 60px -30px rgba(0,0,0,0.45)' }}>
+          {slide.kicker && <div style={{ fontFamily: DISPLAY, fontSize: 24 }}>{slide.kicker}</div>}
+          {img({ width: cardW - 68, height: photoH })}
+          <div style={{ fontFamily: DISPLAY, fontSize: 40, lineHeight: 1.05, whiteSpace: 'pre-line' }}>{slide.headline}</div>
+          <div style={{ fontSize: 16, letterSpacing: 4, textTransform: 'uppercase', color: C.graphite }}>{wordmark}</div>
+        </div>
+      </div>
+    )
+  } else if (slide.layout === 'quiet') {
+    // Full-bleed photo; only a small gallery label.
+    body = (
+      <>
+        {img({ position: 'absolute', inset: 0, width: w, height: h })}
+        <div style={{ position: 'absolute', left: 48, bottom: tall ? 100 : 48, background: C.ivory, color: C.ink, padding: '18px 22px', maxWidth: 560, display: 'grid', gap: 6 }}>
+          {slide.kicker && <span style={{ fontSize: 18, letterSpacing: 4, textTransform: 'uppercase', color: C.graphite }}>{slide.kicker}</span>}
+          <span style={{ fontFamily: DISPLAY, fontSize: 34, lineHeight: 1.1 }}>{slide.headline}</span>
+        </div>
+        {counter && <div style={{ position: 'absolute', right: 48, top: 44, color: C.ivory, fontSize: 22, letterSpacing: 4 }}>{counter}</div>}
+      </>
+    )
+  } else if (slide.layout === 'split') {
     const photoH = Math.round(h * (tall ? 0.56 : 0.58))
     body = (
       <>
