@@ -7,6 +7,8 @@ import { Home } from './pages/Home'
 import { Login } from './pages/Login'
 import { BrandDNA } from './pages/BrandDNA'
 import { CreativeDirector } from './pages/CreativeDirector'
+import { ReviewStudio } from './pages/ReviewStudio'
+import { PostEditor } from './pages/PostEditor'
 import { WorkspaceProvider } from './components/WorkspaceProvider'
 import { Room } from './pages/Room'
 
@@ -38,7 +40,8 @@ export default function App() {
                 <Route path="/creative-director" element={<CreativeDirector />} />
                 <Route path="/trend-radar" element={<Room phase="Phase 6" title="Trend Radar" summary="Grok's research into design, culture and materials, with every trend linked to its sources and dates." />} />
                 <Route path="/calendar" element={<Room phase="Phase 5" title="The Calendar" summary="A month of content at a glance. Drag to reschedule without regenerating anything." />} />
-                <Route path="/review" element={<Room phase="Phase 5" title="Review Studio" summary="Nothing is published without your approval. Edits after approval require a fresh one." />} />
+                <Route path="/review" element={<ReviewStudio />} />
+                <Route path="/review/:id" element={<PostEditor />} />
                 <Route path="*" element={<Room phase="—" title="Room not found" summary="This room doesn't exist. Use the navigation above to return to the studio." />} />
               </Route>
             </Route>

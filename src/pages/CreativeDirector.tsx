@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { composePost } from '../lib/content'
 import { deleteConversation, listConversations, listMessages, streamChat, type ChatMessage, type Conversation } from '../lib/creative'
 import { useWorkspace } from '../lib/workspace-context'
 import { solidBtn, textBtn } from '../components/ui'
@@ -163,7 +164,12 @@ export function CreativeDirector() {
                       <span className="font-display text-4xl italic leading-none text-[var(--accent)]" aria-hidden="true">Cl</span>
                       <div className="min-w-0">
                         <div className="md max-w-[72ch]"><Markdown remarkPlugins={[remarkGfm]}>{m.content}</Markdown></div>
-                        {status.kind !== 'streaming' && <CopyButton text={m.content} />}
+                        {status.kind !== 'streaming' && (
+                          <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2">
+                            <CopyButton text={m.content} />
+                            <MakePost idea={m.content} workspaceId={ws.id} conversationId={active} />
+                          </div>
+                        )}
                       </div>
                     </article>
                   )}
@@ -219,10 +225,55 @@ function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false)
   return (
     <button
-      className={`${textBtn} mt-3 text-[var(--muted)]`}
+      className={`${textBtn} text-[var(--muted)]`}
       onClick={() => navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500) }, () => {})}
     >
       {copied ? 'Copied' : 'Copy'}
     </button>
+  )
+}
+
+function MakePost({ idea, workspaceId, conversationId }: { idea: string; workspaceId: string; conversationId: string | null }) {
+  const navigate = useNavigate()
+  const [open, setOpen] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const go = async (format: 'auto' | 'post' | 'carousel' | 'story') => {
+    setBusy(true); setError(null)
+    try {
+      const { id } = await composePost({ workspaceId, idea, format, conversationId })
+      navigate(`/review/${id}`)
+    } catch (e) {
+      setError((e as Error).message)
+      setBusy(false)
+    }
+  }
+
+  if (busy) {
+    return (
+      <span className="flex items-center gap-3 text-[11px] uppercase tracking-[0.14em] text-[var(--muted)]" role="status">
+        <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-[var(--accent)]" aria-hidden="true" />
+        Claude is art-directing the post and choosing photos (usually under a minute)…
+      </span>
+    )
+  }
+  return (
+    <span className="flex flex-wrap items-center gap-x-4 gap-y-2">
+      {!open ? (
+        <button className={`${textBtn} text-[var(--accent)]`} onClick={() => setOpen(true)}>Make this a post →</button>
+      ) : (
+        <>
+          <span className="text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]">Make it a</span>
+          {(['post', 'carousel', 'story', 'auto'] as const).map((f) => (
+            <button key={f} className={`${textBtn} text-[var(--accent)]`} onClick={() => go(f)}>
+              {f === 'post' ? 'Single post' : f === 'carousel' ? 'Carousel' : f === 'story' ? 'Story' : 'Let Claude choose'}
+            </button>
+          ))}
+          <button className={textBtn} onClick={() => setOpen(false)}>Cancel</button>
+        </>
+      )}
+      {error && <span role="alert" className="basis-full text-sm text-cherry">{error}</span>}
+    </span>
   )
 }
