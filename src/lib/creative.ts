@@ -17,6 +17,8 @@ export type Brief = {
   language: string
   presenter: string | null
   off_limits: string | null
+  creative_philosophy: string | null
+  visual_direction: string | null
 }
 
 export async function listConversations(workspaceId: string): Promise<Conversation[]> {

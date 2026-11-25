@@ -42,6 +42,19 @@ Scripts must sound natural spoken aloud, fit the target duration (about 2.5 word
 STYLE OF CONVERSATION
 Be decisive: propose a strong direction rather than listing many weak options. Ask at most one clarifying question, and only when the request is genuinely ambiguous. Keep chat replies concise; use markdown headings, lists and small tables only when they help.`
 
+/** New Supabase projects expose keys as JSON maps (SUPABASE_*_KEYS); older ones as single legacy keys. */
+function envKey(jsonName: string, legacyName: string): string | undefined {
+  const raw = Deno.env.get(jsonName)
+  if (raw) {
+    try {
+      const map = JSON.parse(raw) as Record<string, string>
+      const v = map.default ?? Object.values(map)[0]
+      if (v) return v
+    } catch { /* fall through to legacy */ }
+  }
+  return Deno.env.get(legacyName)
+}
+
 type Brief = Record<string, string | null>
 
 function buildContext(opts: {
@@ -64,6 +77,7 @@ function buildContext(opts: {
     audience: 'Audience (in priority order)', voice: 'Tone', never_sound: 'Never sound like',
     avoid_words: 'Words and habits to avoid', inspirations: 'Admired references', language: 'Language',
     presenter: 'Video presenter', off_limits: 'Off-limits topics and claims',
+    creative_philosophy: 'Creative philosophy and themes', visual_direction: 'Visual and image direction',
   }
   let anyBrief = false
   for (const [k, label] of Object.entries(labels)) {
@@ -114,8 +128,9 @@ Deno.serve(async (req) => {
   if (!apiKey) return json(500, { error: 'The Claude API key is not configured. Add ANTHROPIC_API_KEY in Supabase → Edge Functions → Secrets.' })
 
   const url = Deno.env.get('SUPABASE_URL')!
-  const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!
-  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  const anonKey = envKey('SUPABASE_PUBLISHABLE_KEYS', 'SUPABASE_ANON_KEY')
+  const serviceKey = envKey('SUPABASE_SECRET_KEYS', 'SUPABASE_SERVICE_ROLE_KEY')
+  if (!anonKey || !serviceKey) return json(500, { error: 'The backend is missing its Supabase keys. Contact your developer.' })
   const authHeader = req.headers.get('Authorization') ?? ''
 
   // Who is asking?
@@ -134,9 +149,20 @@ Deno.serve(async (req) => {
   const admin = createClient(url, serviceKey)
   const ws = body.workspace_id
 
-  // Must be an owner or editor of this workspace.
-  const { data: member } = await admin.from('workspace_members').select('role, workspaces(name)').eq('workspace_id', ws).eq('user_id', user.id).maybeSingle()
+  // Must be an owner or editor of this workspace. Checked with the caller's own session (RLS).
+  const { data: member, error: memberErr } = await userClient.from('workspace_members').select('role, workspaces(name)').eq('workspace_id', ws).eq('user_id', user.id).maybeSingle()
+  if (memberErr) {
+    console.error('membership check failed', memberErr)
+    return json(500, { error: `Couldn't check workspace access: ${memberErr.message}` })
+  }
   if (!member || member.role === 'viewer') return json(403, { error: 'You do not have access to this workspace.' })
+
+  // Confirm the privileged connection works before doing any work.
+  const { error: adminErr } = await admin.from('workspaces').select('id', { head: true, count: 'exact' }).eq('id', ws)
+  if (adminErr) {
+    console.error('service connection failed', adminErr)
+    return json(500, { error: `The backend couldn't reach the database: ${adminErr.message}` })
+  }
   const workspaceName = (member.workspaces as { name?: string } | null)?.name ?? 'the brand'
 
   // Spending guard: stop when this month's estimated spend reaches the budget.

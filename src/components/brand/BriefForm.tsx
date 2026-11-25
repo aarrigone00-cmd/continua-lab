@@ -15,6 +15,8 @@ const FIELDS: { key: keyof Brief; label: string; hint: string; rows?: number }[]
   { key: 'language', label: 'Language and spelling', hint: 'e.g. English (US), with occasional Italian.' },
   { key: 'presenter', label: 'Video presenter', hint: 'Digital twin of a real person (with recorded consent) or a stock avatar.' },
   { key: 'off_limits', label: 'Off-limits', hint: 'Competitors, topics, claims you cannot make.', rows: 2 },
+  { key: 'creative_philosophy', label: 'Creative philosophy and themes', hint: 'What the brand explores, and why people should follow it.', rows: 6 },
+  { key: 'visual_direction', label: 'Visual and image direction', hint: 'Artistic concepts, visual language, palettes, formats.', rows: 6 },
 ]
 
 export function BriefForm({ workspaceId, canEdit }: { workspaceId: string; canEdit: boolean }) {
