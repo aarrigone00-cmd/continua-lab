@@ -1,0 +1,10 @@
+{
+  // Cloudflare Workers static-assets deployment for the CONTINUA LAB frontend.
+  "name": "continua-lab",
+  "compatibility_date": "2025-09-01",
+  "assets": {
+    "directory": "./dist",
+    // Every unknown path serves index.html so app routes like /brand-dna work.
+    "not_found_handling": "single-page-application"
+  }
+}
