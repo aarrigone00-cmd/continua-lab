@@ -27,6 +27,7 @@ export type BrandAsset = {
   tags: string[]
   approval: Approval
   source: string | null
+  auto_described_at?: string | null
   created_at: string
   updated_at: string
 }

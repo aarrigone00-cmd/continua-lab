@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { BriefForm } from '../components/brand/BriefForm'
+import { DescribePanel } from '../components/brand/DescribePanel'
 import { AssetDrawer } from '../components/brand/AssetDrawer'
 import { Gallery } from '../components/brand/Gallery'
 import { ProductEditor } from '../components/brand/ProductEditor'
@@ -121,7 +122,10 @@ export function BrandDNA() {
               </p>
             </div>
           ) : (
-            assets.length > 0 && <Gallery assets={assets} urls={urls} canEdit={canEdit} onOpen={setOpen} onSetApproval={onSetApproval} />
+            assets.length > 0 && <>
+              {canEdit && <DescribePanel workspaceId={ws.id} assets={assets} onUpdated={setAssets} />}
+              <Gallery assets={assets} urls={urls} canEdit={canEdit} onOpen={setOpen} onSetApproval={onSetApproval} />
+            </>
           )}
         </div>
       ) : (

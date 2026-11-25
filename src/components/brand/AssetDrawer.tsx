@@ -76,6 +76,7 @@ export function AssetDrawer({ asset, url, canEdit, onChange, onDelete, onClose }
                 {asset.origin === 'real' ? 'Real · ' : `AI-generated · ${asset.ai_model} · `}
                 {asset.kind} · {formatBytes(asset.size_bytes)}
                 {asset.width ? ` · ${asset.width}×${asset.height}` : ''}
+                {asset.auto_described_at ? ' · described by Claude' : ''}
               </p>
               <button className={textBtn} onClick={onClose}>Close</button>
             </div>

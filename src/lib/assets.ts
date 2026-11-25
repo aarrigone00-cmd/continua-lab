@@ -152,3 +152,24 @@ export function formatBytes(n: number | null) {
   if (n < 1024 * 1024) return `${Math.round(n / 1024)} KB`
   return `${(n / 1024 / 1024).toFixed(1)} MB`
 }
+
+export type DescribeResult = { id: string; ok: boolean; error?: string; title?: string; cost?: number }
+
+/** Ask Claude to look at up to 4 photos and write title, description and tags. */
+export async function describeAssets(workspaceId: string, assetIds: string[]): Promise<DescribeResult[]> {
+  const { data } = await supabase.auth.getSession()
+  const token = data.session?.access_token
+  if (!token) throw new Error('Please sign in again.')
+  const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/describe-assets`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ workspace_id: workspaceId, asset_ids: assetIds }),
+  })
+  const body = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(body.error ?? `Auto-describe failed (error ${res.status}).`)
+  return body.results as DescribeResult[]
+}
