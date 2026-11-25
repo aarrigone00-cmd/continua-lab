@@ -60,10 +60,10 @@ export function ReviewStudio() {
       <div className="mt-8 grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {shown.map((it) => (
           <Link key={it.id} to={`/review/${it.id}`} className="group block">
-            <div className="relative flex justify-center overflow-hidden bg-paper/60 p-4 transition-transform duration-500 group-hover:-translate-y-1">
+            <div className="relative flex justify-center overflow-hidden transition-transform duration-500 group-hover:-translate-y-1">
               {it.slides[0] && (
                 <SlideCanvas slide={it.slides[0]} aspect={it.aspect} imageUrl={it.slides[0].asset_id ? urls[it.slides[0].asset_id] : undefined} imageUrl2={it.slides[0].asset_id_2 ? urls[it.slides[0].asset_id_2] : undefined}
-                  index={0} total={it.slides.length} wordmark={ws.name} scale={0.22} />
+                  index={0} total={it.slides.length} wordmark={ws.name} scale={0.26} />
               )}
               {it.slides.length > 1 && (
                 <span className="absolute right-3 top-3 bg-[var(--bg)] px-2 py-1 text-[10px] uppercase tracking-[0.12em]">{it.slides.length} slides</span>

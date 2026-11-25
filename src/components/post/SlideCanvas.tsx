@@ -83,8 +83,10 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
     )
   } else if (slide.layout === 'billboard') {
     // WAIRK-like: close photo, one giant heavy word anchored to the bottom edge.
-    const word = slide.headline.replace(/\n/g, ' ').toUpperCase()
-    const size = Math.min(520, Math.max(120, Math.floor((w - 24) / (Math.max(3, word.length) * 0.8))))
+    const word = slide.headline.replace(/\n/g, ' ').toUpperCase().trim()
+    const lines = word.length > 10 ? word.split(/\s+/).filter(Boolean) : [word]
+    const longest = Math.max(3, ...lines.map((l) => l.length))
+    const size = Math.min(520, Math.max(110, Math.floor((w - 24) / (longest * 0.8))))
     body = (
       <div style={{ position: 'absolute', inset: 0, background: C.ink }}>
         {img({ position: 'absolute', inset: 0, width: w, height: h, filter: mono ? 'grayscale(1) contrast(1.25)' : 'contrast(1.1) saturate(1.05)' })}
@@ -94,7 +96,7 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
           {counter && <div style={{ fontWeight: 500 }}>{counter}</div>}
         </div>
         {slide.body && <div style={{ position: 'absolute', right: 36, top: 34, maxWidth: 380, textAlign: 'right', color: C.ivory, fontFamily: WIDE, fontSize: 17, lineHeight: 1.45, letterSpacing: 1.5, textTransform: 'uppercase' }}>{slide.body}</div>}
-        <div style={{ position: 'absolute', left: 0, right: 0, bottom: tall ? 60 : -Math.round(size * 0.1), textAlign: 'center', whiteSpace: 'nowrap', fontFamily: WIDE, fontStretch: '100%', fontWeight: 900, fontSize: size, lineHeight: 0.8, letterSpacing: -size * 0.035, color: '#FFFFFF' }}>{word}</div>
+        <div style={{ position: 'absolute', left: 0, right: 0, bottom: tall ? 60 : -Math.round(size * 0.1), textAlign: 'center', whiteSpace: 'nowrap', fontFamily: WIDE, fontStretch: '100%', fontWeight: 900, fontSize: size, lineHeight: 0.8, letterSpacing: -size * 0.035, color: '#FFFFFF' }}>{lines.map((l, i) => <div key={i}>{l}</div>)}</div>
       </div>
     )
   } else if (slide.layout === 'signature') {
@@ -231,7 +233,7 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
     body = (
       <div style={{ position: 'absolute', inset: 0, background: bg, color: fg }}>
         <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', padding: 70, textAlign: 'center' }}>
-          <div style={{ fontFamily: DISPLAY, fontWeight: 800, fontStyle: 'italic', fontSize: size, lineHeight: 0.9, letterSpacing: -size * 0.03, whiteSpace: 'pre-line' }}>{slide.headline}</div>
+          <div style={{ fontFamily: WIDE, fontStretch: '62%', fontWeight: 900, fontSize: size * 1.15, lineHeight: 0.82, letterSpacing: -size * 0.02, textTransform: 'uppercase', whiteSpace: 'pre-line' }}>{slide.headline}</div>
         </div>
         {slide.body && (
           <div style={{ position: 'absolute', left: 72, right: 72, top: tall ? 140 : 64, fontSize: 28, lineHeight: 1.4, maxWidth: 720 }}>{slide.body}</div>

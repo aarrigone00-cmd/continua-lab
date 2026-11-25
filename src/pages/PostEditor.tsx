@@ -13,23 +13,14 @@ import type { BrandAsset } from '../lib/types'
 import { useWorkspace } from '../lib/workspace-context'
 
 const LAYOUTS: { value: Layout; label: string }[] = [
-  { value: 'cinema', label: 'Cinema' },
   { value: 'billboard', label: 'Billboard' },
+  { value: 'cinema', label: 'Cinema' },
   { value: 'crop', label: 'Crop' },
   { value: 'signature', label: 'Signature' },
   { value: 'poster', label: 'Poster' },
-  { value: 'masthead', label: 'Masthead' },
-  { value: 'monument', label: 'Monument' },
   { value: 'field', label: 'Color field' },
+  { value: 'monument', label: 'Monument' },
   { value: 'quiet', label: 'Quiet' },
-  { value: 'lookbook', label: 'Lookbook' },
-  { value: 'issue', label: 'Issue' },
-  { value: 'framed', label: 'Framed' },
-  { value: 'collage', label: 'Collage' },
-  { value: 'strips', label: 'Strips' },
-  { value: 'editorial', label: 'Editorial' },
-  { value: 'split', label: 'Split' },
-  { value: 'type', label: 'Typographic' },
 ]
 
 const FIELD_COLORS: { value: FieldColor; hex: string; label: string }[] = [
@@ -150,7 +141,7 @@ export function PostEditor() {
       <div className="mt-8 grid gap-10 lg:grid-cols-[auto_1fr]">
         {/* Preview */}
         <div className="grid content-start justify-items-start gap-4">
-          <div className="bg-paper/60 p-5 shadow-sm">
+          <div className="shadow-[0_30px_60px_-30px_rgba(0,0,0,0.6)]">
             <SlideCanvas slide={slide} aspect={draft.aspect} imageUrl={urlFor(slide.asset_id)} imageUrl2={urlFor(slide.asset_id_2 ?? null)} index={sel} total={draft.slides.length} wordmark={ws.name} scale={previewScale} />
           </div>
           {draft.slides.length > 1 && (
