@@ -5,9 +5,9 @@ import { ProductEditor } from '../components/brand/ProductEditor'
 import { ProductList } from '../components/brand/ProductList'
 import { Uploader } from '../components/brand/Uploader'
 import { MagneticButton } from '../components/MagneticButton'
-import { listAssets, signedUrls } from '../lib/assets'
+import { listAssets, logActivity, setApproval, signedUrls } from '../lib/assets'
 import { listProducts } from '../lib/products'
-import type { BrandAsset, Product } from '../lib/types'
+import type { Approval, BrandAsset, Product } from '../lib/types'
 import { useWorkspace } from '../lib/workspace-context'
 
 type Tab = 'archive' | 'products'
@@ -40,6 +40,13 @@ export function BrandDNA() {
     setAssets((prev) => [a, ...(prev ?? [])])
     const u = await signedUrls([a.storage_path]).catch(() => ({}))
     setUrls((prev) => ({ ...prev, ...u }))
+  }
+
+  const onSetApproval = async (ids: string[], approval: Approval) => {
+    const updated = await setApproval(ids, approval)
+    const byId = new Map(updated.map((a) => [a.id, a]))
+    setAssets((prev) => prev?.map((a) => byId.get(a.id) ?? a) ?? null)
+    await logActivity(ws.id, `assets_${approval}`, 'brand_asset', undefined, { count: updated.length })
   }
 
   const assetsById = useMemo(() => Object.fromEntries((assets ?? []).map((a) => [a.id, a])), [assets])
@@ -108,7 +115,7 @@ export function BrandDNA() {
               </p>
             </div>
           ) : (
-            assets.length > 0 && <Gallery assets={assets} urls={urls} onOpen={setOpen} />
+            assets.length > 0 && <Gallery assets={assets} urls={urls} canEdit={canEdit} onOpen={setOpen} onSetApproval={onSetApproval} />
           )}
         </div>
       ) : (

@@ -120,6 +120,18 @@ export async function updateAsset(id: string, patch: Partial<BrandAsset>): Promi
   return data
 }
 
+/** Approve, reject or reset many assets in one request. */
+export async function setApproval(ids: string[], approval: BrandAsset['approval']): Promise<BrandAsset[]> {
+  const out: BrandAsset[] = []
+  // Batches of 100 keep each request URL short.
+  for (let i = 0; i < ids.length; i += 100) {
+    const { data, error } = await supabase.from('brand_assets').update({ approval }).in('id', ids.slice(i, i + 100)).select()
+    if (error) throw new Error(error.message)
+    out.push(...(data as BrandAsset[]))
+  }
+  return out
+}
+
 export async function deleteAsset(asset: BrandAsset) {
   const { error: sErr } = await supabase.storage.from(BUCKET).remove([asset.storage_path])
   if (sErr) throw new Error(sErr.message)
