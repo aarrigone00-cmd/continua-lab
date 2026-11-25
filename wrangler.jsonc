@@ -2,6 +2,9 @@
   // Cloudflare Workers static-assets deployment for the CONTINUA LAB frontend.
   "name": "continua-lab",
   "compatibility_date": "2025-09-01",
+  // Serve on the free continua-lab.<account>.workers.dev address.
+  "workers_dev": true,
+  "preview_urls": false,
   "assets": {
     "directory": "./dist",
     // Every unknown path serves index.html so app routes like /brand-dna work.
